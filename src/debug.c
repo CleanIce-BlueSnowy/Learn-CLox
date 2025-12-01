@@ -38,6 +38,21 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         case OpConstant: {
             return constant_instruction("Constant", chunk, offset);
         }
+        case OpNegate: {
+            return simple_instruction("Negate", offset);
+        }
+        case OpAdd: {
+            return simple_instruction("Add", offset);
+        }
+        case OpSubtract: {
+            return simple_instruction("Subtract", offset);
+        }
+        case OpMultiply: {
+            return simple_instruction("Multiply", offset);
+        }
+        case OpDivide: {
+            return simple_instruction("Divide", offset);
+        }
         case OpReturn: {
             return simple_instruction("Return", offset);
         }

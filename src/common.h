@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define DEBUG_TRACE_EXECUTION
+
 typedef uint8_t uint8;
 typedef int32_t int32;
 typedef size_t usize;
