@@ -9,6 +9,8 @@ set(SOURCES
     src/debug.c
     src/main.c
     src/memory.c
+    src/value.c
+    src/vm.c
 )
 
 set(HEADERS
@@ -16,6 +18,8 @@ set(HEADERS
     src/common.h
     src/debug.h
     src/memory.h
+    src/value.h
+    src/vm.h
 )
 
 add_executable(clox ${SOURCES} ${HEADERS})
