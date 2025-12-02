@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 23)
 
 set(SOURCES
     src/chunk.c
+    src/compiler.c
     src/debug.c
     src/main.c
     src/memory.c
@@ -16,8 +17,10 @@ set(SOURCES
 set(HEADERS
     src/chunk.h
     src/common.h
+    src/compiler.h
     src/debug.h
     src/memory.h
+    src/scanner.h
     src/value.h
     src/vm.h
 )
