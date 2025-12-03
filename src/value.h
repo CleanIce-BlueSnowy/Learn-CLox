@@ -2,7 +2,38 @@
 
 #include "common.h"
 
-typedef float64 Value;
+typedef enum {
+    ValBool,
+    ValNil,
+    ValNumber,
+} ValueType;
+
+typedef struct {
+    ValueType type;
+    union {
+        bool boolean;
+        float64 number;
+    } as;
+} Value;
+
+#define IS_BOOL(value) \
+    ((value).type == ValBool)
+#define IS_NIL(value) \
+    ((value).type == ValNil)
+#define IS_NUMBER(value) \
+    ((value).type == ValNumber)
+
+#define AS_BOOL(value) \
+    ((value).as.boolean)
+#define AS_NUMBER(value) \
+    ((value).as.number)
+
+#define BOOL_VAL(value) \
+    ((Value) { ValBool, { .boolean = value } })
+#define NIL_VAL \
+    ((Value) { ValNil, { .number = 0 } })
+#define NUMBER_VAL(value) \
+    ((Value) { ValNumber, { .number = value } })
 
 typedef struct {
     int32 capacity;

@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "common.h"
@@ -9,6 +10,20 @@ VM vm;
 
 static void reset_stack() {
     vm.stack_top = vm.stack;
+}
+
+static void runtime_error(const char* format, ...) {
+    va_list args;
+    va_start(args);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    fputs("\n", stderr);
+
+    usize instruction = vm.ip - vm.chunk->code - 1;
+    int32 line = vm.chunk->lines[instruction];
+    fprintf(stderr, "[line %d] in script\n", line);
+    reset_stack();
 }
 
 void init_vm() {
@@ -25,6 +40,10 @@ void push(Value value) {
 Value pop() {
     vm.stack_top--;
     return *vm.stack_top;
+}
+
+static Value peek(int32 distance) {
+    return vm.stack_top[-1 - distance];
 }
 
 static InterpretResult run() {
@@ -59,7 +78,11 @@ static InterpretResult run() {
                 break;
             }
             case OpNegate: {
-                push(-pop());
+                if (!IS_NUMBER(peek(0))) {
+                    runtime_error("Operand must be a number.");
+                    return InterpretRuntimeError;
+                }
+                push(NUMBER_VAL(-AS_NUMBER(pop())));
                 break;
             }
             case OpAdd: {
