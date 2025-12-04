@@ -41,3 +41,20 @@ void print_value(Value value) {
         }
     }
 }
+
+bool values_equal(Value a, Value b) {
+    if (a.type != b.type) {
+        return false;
+    }
+    switch (a.type) {
+        case ValBool: {
+            return AS_BOOL(a) == AS_BOOL(b);
+        }
+        case ValNil: {
+            return true;
+        }
+        case ValNumber: {
+            return AS_NUMBER(a) == AS_NUMBER(b);
+        }
+    }
+}

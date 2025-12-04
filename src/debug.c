@@ -47,6 +47,15 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         case OpFalse: {
             return simple_instruction("false", offset);
         }
+        case OpEqual: {
+            return simple_instruction("equal", offset);
+        }
+        case OpGreater: {
+            return simple_instruction("greater", offset);
+        }
+        case OpLess: {
+            return simple_instruction("less", offset);
+        }
         case OpAdd: {
             return simple_instruction("add", offset);
         }
