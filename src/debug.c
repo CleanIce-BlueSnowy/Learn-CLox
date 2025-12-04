@@ -36,25 +36,37 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
     uint8 instruction = chunk->code[offset];
     switch (instruction) {
         case OpConstant: {
-            return constant_instruction("Constant", chunk, offset);
+            return constant_instruction("constant", chunk, offset);
         }
-        case OpNegate: {
-            return simple_instruction("Negate", offset);
+        case OpNil: {
+            return simple_instruction("nil", offset);
+        }
+        case OpTrue: {
+            return simple_instruction("true", offset);
+        }
+        case OpFalse: {
+            return simple_instruction("false", offset);
         }
         case OpAdd: {
-            return simple_instruction("Add", offset);
+            return simple_instruction("add", offset);
         }
         case OpSubtract: {
-            return simple_instruction("Subtract", offset);
+            return simple_instruction("subtract", offset);
         }
         case OpMultiply: {
-            return simple_instruction("Multiply", offset);
+            return simple_instruction("multiply", offset);
         }
         case OpDivide: {
-            return simple_instruction("Divide", offset);
+            return simple_instruction("divide", offset);
+        }
+        case OpNot: {
+            return simple_instruction("not", offset);
+        }
+        case OpNegate: {
+            return simple_instruction("negate", offset);
         }
         case OpReturn: {
-            return simple_instruction("Return", offset);
+            return simple_instruction("return", offset);
         }
         default: {
             printf("Unknown opcode %d\n", instruction);

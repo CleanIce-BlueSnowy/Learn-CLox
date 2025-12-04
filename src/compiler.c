@@ -161,6 +161,26 @@ static void binary() {
     }
 }
 
+static void literal() {
+    switch (parser.previous.type) {
+        case TokenFalse: {
+            emit_byte(OpFalse);
+            break;
+        }
+        case TokenNil: {
+            emit_byte(OpNil);
+            break;
+        }
+        case TokenTrue: {
+            emit_byte(OpTrue);
+            break;
+        }
+        default: {
+            return;  // Unreachable.
+        }
+    }
+}
+
 static void grouping() {
     expression();
     consume(TokenRightParen, "Expect `)` after expression.");
@@ -177,6 +197,10 @@ static void unary() {
     parse_precedence(PrecUnary);
 
     switch (operator_type) {
+        case TokenBang: {
+            emit_byte(OpNot);
+            break;
+        }
         case TokenMinus: {
             emit_byte(OpNegate);
             break;
@@ -199,7 +223,7 @@ ParseRule rules[] = {
     [TokenSemicolon] = { NULL, NULL, PrecNone },
     [TokenSlash] = { NULL, binary, PrecFactor },
     [TokenStar] = { NULL, binary, PrecFactor },
-    [TokenBang] = { NULL, NULL, PrecNone },
+    [TokenBang] = { unary, NULL, PrecNone },
     [TokenBangEqual] = { NULL, NULL, PrecNone },
     [TokenEqual] = { NULL, NULL, PrecNone },
     [TokenEqualEqual] = { NULL, NULL, PrecNone },
@@ -213,17 +237,17 @@ ParseRule rules[] = {
     [TokenAnd] = { NULL, NULL, PrecNone },
     [TokenClass] = { NULL, NULL, PrecNone },
     [TokenElse] = { NULL, NULL, PrecNone },
-    [TokenFalse] = { NULL, NULL, PrecNone },
+    [TokenFalse] = { literal, NULL, PrecNone },
     [TokenFor] = { NULL, NULL, PrecNone },
     [TokenFun] = { NULL, NULL, PrecNone },
     [TokenIf] = { NULL, NULL, PrecNone },
-    [TokenNil] = { NULL, NULL, PrecNone },
+    [TokenNil] = { literal, NULL, PrecNone },
     [TokenOr] = { NULL, NULL, PrecNone },
     [TokenPrint] = { NULL, NULL, PrecNone },
     [TokenReturn] = { NULL, NULL, PrecNone },
     [TokenSuper] = { NULL, NULL, PrecNone },
     [TokenThis] = { NULL, NULL, PrecNone },
-    [TokenTrue] = { NULL, NULL, PrecNone },
+    [TokenTrue] = { literal, NULL, PrecNone },
     [TokenVar] = { NULL, NULL, PrecNone },
     [TokenWhile] = { NULL, NULL, PrecNone },
     [TokenError] = { NULL, NULL, PrecNone },
