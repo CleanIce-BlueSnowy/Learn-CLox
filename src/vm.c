@@ -1,9 +1,12 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "common.h"
 #include "compiler.h"
 #include "debug.h"
+#include "object.h"
+#include "memory.h"
 #include "vm.h"
 
 VM vm;
@@ -28,9 +31,12 @@ static void runtime_error(const char* format, ...) {
 
 void init_vm() {
     reset_stack();
+    vm.objects = NULL;
 }
 
-void free_vm() {}
+void free_vm() {
+    free_objects();
+}
 
 void push(Value value) {
     *vm.stack_top = value;
@@ -47,7 +53,21 @@ static Value peek(int32 distance) {
 }
 
 static bool is_falsy(Value value) {
-    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+    return is_nil(value) || (is_bool(value) && !as_bool(value));
+}
+
+static void concatenate() {
+    ObjString* b = as_string(pop());
+    ObjString* a = as_string(pop());
+
+    int32 length = a->length + b->length;
+    char* chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+
+    ObjString* result = take_string(chars, length);
+    push(obj_val((Obj*) result));
 }
 
 static InterpretResult run() {
@@ -57,12 +77,12 @@ static InterpretResult run() {
     (vm.chunk->constants.values[READ_BYTE()])
 #define BINARY_OP(value_type, op) \
     do { \
-        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
+        if (!is_number(peek(0)) || !is_number(peek(1))) { \
             runtime_error("Operands must be numbers."); \
             return InterpretRuntimeError; \
         } \
-        float64 b = AS_NUMBER(pop()); \
-        float64 a = AS_NUMBER(pop()); \
+        float64 b = as_number(pop()); \
+        float64 a = as_number(pop()); \
         push(value_type(a op b)); \
     } while (false);
 
@@ -86,57 +106,66 @@ static InterpretResult run() {
                 break;
             }
             case OpNil: {
-                push(NIL_VAL);
+                push(nil_val());
                 break;
             }
             case OpTrue: {
-                push(BOOL_VAL(true));
+                push(bool_val(true));
                 break;
             }
             case OpFalse: {
-                push(BOOL_VAL(false));
+                push(bool_val(false));
                 break;
             }
             case OpEqual: {
                 Value b = pop();
                 Value a = pop();
-                push(BOOL_VAL(values_equal(a, b)));
+                push(bool_val(values_equal(a, b)));
                 break;
             }
             case OpGreater: {
-                BINARY_OP(BOOL_VAL, >);
+                BINARY_OP(bool_val, >);
                 break;
             }
             case OpLess: {
-                BINARY_OP(BOOL_VAL, <);
+                BINARY_OP(bool_val, <);
                 break;
             }
             case OpAdd: {
-                BINARY_OP(NUMBER_VAL, +);
+                if (is_string(peek(0)) && is_string(peek(1))) {
+                    concatenate();
+                } else if (is_number(peek(0)) && is_number(peek(1))) {
+                    float64 b = as_number(pop());
+                    float64 a = as_number(pop());
+                    push(number_val(a + b));
+                } else {
+                    runtime_error("Operands must be two numbers or two strings.");
+                    return InterpretRuntimeError;
+                }
                 break;
             }
             case OpSubtract: {
-                BINARY_OP(NUMBER_VAL, -);
+                BINARY_OP(number_val, -);
                 break;
             }
             case OpMultiply: {
-                BINARY_OP(NUMBER_VAL, *);
+                BINARY_OP(number_val, *);
                 break;
             }
             case OpDivide: {
-                BINARY_OP(NUMBER_VAL, /);
+                BINARY_OP(number_val, /);
                 break;
             }
             case OpNot: {
-                push(BOOL_VAL(is_falsy(pop())));
+                push(bool_val(is_falsy(pop())));
                 break;
             }
             case OpNegate: {
-                if (!IS_NUMBER(peek(0))) {
+                if (!is_number(peek(0))) {
                     runtime_error("Operand must be a number.");
                     return InterpretRuntimeError;
                 }
-                push(NUMBER_VAL(-AS_NUMBER(pop())));
+                push(number_val(-as_number(pop())));
                 break;
             }
             case OpReturn: {

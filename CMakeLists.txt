@@ -10,6 +10,7 @@ set(SOURCES
     src/debug.c
     src/main.c
     src/memory.c
+    src/object.c
     src/scanner.c
     src/value.c
     src/vm.c
@@ -21,6 +22,7 @@ set(HEADERS
     src/compiler.h
     src/debug.h
     src/memory.h
+    src/object.h
     src/scanner.h
     src/value.h
     src/vm.h

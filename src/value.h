@@ -2,10 +2,14 @@
 
 #include "common.h"
 
+typedef struct Obj Obj;
+typedef struct ObjString ObjString;
+
 typedef enum {
     ValBool,
     ValNil,
     ValNumber,
+    ValObj,
 } ValueType;
 
 typedef struct {
@@ -13,27 +17,9 @@ typedef struct {
     union {
         bool boolean;
         float64 number;
+        Obj* obj;
     } as;
 } Value;
-
-#define IS_BOOL(value) \
-    ((value).type == ValBool)
-#define IS_NIL(value) \
-    ((value).type == ValNil)
-#define IS_NUMBER(value) \
-    ((value).type == ValNumber)
-
-#define AS_BOOL(value) \
-    ((value).as.boolean)
-#define AS_NUMBER(value) \
-    ((value).as.number)
-
-#define BOOL_VAL(value) \
-    ((Value) { ValBool, { .boolean = value } })
-#define NIL_VAL \
-    ((Value) { ValNil, { .number = 0 } })
-#define NUMBER_VAL(value) \
-    ((Value) { ValNumber, { .number = value } })
 
 typedef struct {
     int32 capacity;
@@ -46,3 +32,67 @@ void init_value_array(ValueArray* array);
 void write_value_array(ValueArray* array, Value value);
 void free_value_array(ValueArray* array);
 void print_value(Value value);
+
+static inline bool is_bool(Value value) {
+    return value.type == ValBool;
+}
+
+static inline bool is_nil(Value value) {
+    return value.type == ValNil;
+}
+
+static inline bool is_number(Value value) {
+    return value.type == ValNumber;
+}
+
+static inline bool is_obj(Value value) {
+    return value.type == ValObj;
+}
+
+static inline bool as_bool(Value value) {
+    return value.as.boolean;
+}
+
+static inline float64 as_number(Value value) {
+    return value.as.number;
+}
+
+static inline Obj* as_obj(Value value) {
+    return value.as.obj;
+}
+
+static inline Value bool_val(bool value) {
+    return (Value) {
+        .type = ValBool,
+        .as = {
+            .boolean = value,
+        },
+    };
+}
+
+static inline Value nil_val() {
+    return (Value) {
+        .type = ValNil,
+        .as = {
+            .number = 0,
+        },
+    };
+}
+
+static inline Value number_val(float64 value) {
+    return (Value) {
+        .type = ValNumber,
+        .as = {
+            .number = value,
+        },
+    };
+}
+
+static inline Value obj_val(Obj* object) {
+    return (Value) {
+        .type = ValObj,
+        .as = {
+            .obj = object,
+        },
+    };
+}

@@ -212,7 +212,11 @@ static void grouping() {
 
 static void number() {
     float64 value = strtod(parser.previous.start, NULL);
-    emit_constant(NUMBER_VAL(value));
+    emit_constant(number_val(value));
+}
+
+static void string() {
+    emit_constant(obj_val(copy_string(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
 static void unary() {
@@ -256,7 +260,7 @@ ParseRule rules[] = {
     [TokenLess] = { NULL, binary, PrecComparison },
     [TokenLessEqual] = { NULL, binary, PrecComparison },
     [TokenIdentifier] = { NULL, NULL, PrecNone },
-    [TokenString] = { NULL, NULL, PrecNone },
+    [TokenString] = { string, NULL, PrecNone },
     [TokenNumber] = { number, NULL, PrecNone },
     [TokenAnd] = { NULL, NULL, PrecNone },
     [TokenClass] = { NULL, NULL, PrecNone },
