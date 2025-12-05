@@ -17,22 +17,34 @@ static Obj* allocate_object(usize size, ObjType type) {
     return object;
 }
 
-static ObjString* allocate_string(char* chars, int32 length) {
+static ObjString* allocate_string(char* chars, int32 length, uint32 hash) {
     ObjString* string = ALLOCATE_OBJ(ObjString, ObjectString);
     string->length = length;
     string->chars = chars;
+    string->hash = hash;
     return string;
 }
 
+static uint32 hash_string(const char* key, int32 length) {
+    uint32 hash = 2166136261;
+    for (int32 i = 0; i < length; i++) {
+        hash ^= (uint8) key[i];
+        hash *= 16777619;
+    }
+    return hash;
+}
+
 ObjString* take_string(char* chars, int32 length) {
-    return allocate_string(chars, length);
+    uint32 hash = hash_string(chars, length);
+    return allocate_string(chars, length, hash);
 }
 
 ObjString* copy_string(const char* chars, int32 length) {
+    uint32 hash = hash_string(chars, length);
     char* heap_chars = ALLOCATE(char, length + 1);
     memcpy(heap_chars, chars, length);
     heap_chars[length] = '\0';
-    return allocate_string(heap_chars, length);
+    return allocate_string(heap_chars, length, hash);
 }
 
 void print_object(Value value) {
