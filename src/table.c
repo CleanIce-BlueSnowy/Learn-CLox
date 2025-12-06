@@ -21,10 +21,19 @@ void free_table(Table* table) {
 
 static Entry* find_entry(Entry* entries, int32 capacity, ObjString* key) {
     uint32 index = key->hash % capacity;
+    Entry* tombstone = NULL;
 
     while (true) {
         Entry* entry = &entries[index];
-        if (entry->key == key || entry->key == NULL) {
+        if (entry->key == NULL) {
+            if (is_nil(entry->value)) {
+                return tombstone != NULL ? tombstone : entry;
+            } else {
+                if (tombstone == NULL) {
+                    tombstone = entry;
+                }
+            }
+        } else if (entry->key == key) {
             return entry;
         }
         index = (index + 1) % capacity;
@@ -52,6 +61,7 @@ static void adjust_capacity(Table* table, int32 capacity) {
         entries[i].value = nil_val();
     }
 
+    table->count = 0;
     for (int32 i = 0; i < table->capacity; i++) {
         Entry* entry = &table->entries[i];
         if (entry->key == NULL) {
@@ -61,6 +71,7 @@ static void adjust_capacity(Table* table, int32 capacity) {
         Entry* dest = find_entry(entries, capacity, entry->key);
         dest->key = entry->key;
         dest->value = entry->value;
+        table->count++;
     }
 
     FREE_ARRAY(Entry, table->entries, table->capacity);
@@ -76,7 +87,7 @@ bool table_set(Table* table, ObjString* key, Value value) {
 
     Entry* entry = find_entry(table->entries, table->capacity, key);
     bool is_new_key = entry->key == NULL;
-    if (is_new_key) {
+    if (is_new_key && is_nil(entry->value)) {
         table->count++;
     }
 
@@ -85,11 +96,45 @@ bool table_set(Table* table, ObjString* key, Value value) {
     return is_new_key;
 }
 
+bool table_delete(Table* table, ObjString* key) {
+    if (table->count == 0) {
+        return false;
+    }
+
+    Entry* entry = find_entry(table->entries, table->capacity, key);
+    if (entry->key == NULL) {
+        return false;
+    }
+
+    entry->key = NULL;
+    entry->value = bool_val(true);
+    return true;
+}
+
 void table_add_all(Table* from, Table* to) {
     for (int32 i = 0; i < from->capacity; i++) {
         Entry* entry = &from->entries[i];
         if (entry->key != NULL) {
             table_set(to, entry->key, entry->value);
         }
+    }
+}
+
+ObjString* table_find_string(Table* table, const char* chars, int32 length, uint32 hash) {
+    if (table->count == 0) {
+        return NULL;
+    }
+
+    uint32 index = hash % table->capacity;
+    while (true) {
+        Entry* entry = &table->entries[index];
+        if (entry->key == NULL) {
+            if (is_nil(entry->value)) {
+                return NULL;
+            }
+        } else if (entry->key->length == length && entry->key->hash == hash && memcmp(entry->key->chars, chars, length) == 0) {
+            return entry->key;
+        }
+        index = (index + 1) % table->capacity;
     }
 }
