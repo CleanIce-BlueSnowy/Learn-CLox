@@ -32,10 +32,12 @@ static void runtime_error(const char* format, ...) {
 void init_vm() {
     reset_stack();
     vm.objects = NULL;
+    init_table(&vm.globals);
     init_table(&vm.strings);
 }
 
 void free_vm() {
+    free_table(&vm.globals);
     free_table(&vm.strings);
     free_objects();
 }
@@ -77,6 +79,8 @@ static InterpretResult run() {
     (*vm.ip++)
 #define READ_CONSTANT() \
     (vm.chunk->constants.values[READ_BYTE()])
+#define READ_STRING() \
+    as_string(READ_CONSTANT())
 #define BINARY_OP(value_type, op) \
     do { \
         if (!is_number(peek(0)) || !is_number(peek(1))) { \
@@ -117,6 +121,35 @@ static InterpretResult run() {
             }
             case OpFalse: {
                 push(bool_val(false));
+                break;
+            }
+            case OpPop: {
+                pop();
+                break;
+            }
+            case OpGetGlobal: {
+                ObjString* name = READ_STRING();
+                Value value;
+                if (!table_get(&vm.globals, name, &value)) {
+                    runtime_error("Undefined variable `%s`.", name->chars);
+                    return InterpretRuntimeError;
+                }
+                push(value);
+                break;
+            }
+            case OpDefineGlobal: {
+                ObjString* name = READ_STRING();
+                table_set(&vm.globals, name, peek(0));
+                pop();
+                break;
+            }
+            case OpSetGlobal: {
+                ObjString* name = READ_STRING();
+                if (table_set(&vm.globals, name, peek(0))) {
+                    table_delete(&vm.globals, name);
+                    runtime_error("Undefined variable `%s`.", name->chars);
+                    return InterpretRuntimeError;
+                }
                 break;
             }
             case OpEqual: {
@@ -170,9 +203,12 @@ static InterpretResult run() {
                 push(number_val(-as_number(pop())));
                 break;
             }
-            case OpReturn: {
+            case OpPrint: {
                 print_value(pop());
                 printf("\n");
+                break;
+            }
+            case OpReturn: {
                 return InterpretOk;
             }
         }
@@ -180,6 +216,7 @@ static InterpretResult run() {
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 }
 

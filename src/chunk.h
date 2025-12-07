@@ -8,6 +8,10 @@ typedef enum {
     OpNil,
     OpTrue,
     OpFalse,
+    OpPop,
+    OpGetGlobal,
+    OpDefineGlobal,
+    OpSetGlobal,
     OpEqual,
     OpGreater,
     OpLess,
@@ -17,6 +21,7 @@ typedef enum {
     OpDivide,
     OpNot,
     OpNegate,
+    OpPrint,
     OpReturn,
 } OpCode;
 

@@ -47,6 +47,18 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         case OpFalse: {
             return simple_instruction("false", offset);
         }
+        case OpPop: {
+            return simple_instruction("pop", offset);
+        }
+        case OpGetGlobal: {
+            return constant_instruction("get_global", chunk, offset);
+        }
+        case OpDefineGlobal: {
+            return constant_instruction("def_global", chunk, offset);
+        }
+        case OpSetGlobal: {
+            return constant_instruction("set_global", chunk, offset);
+        }
         case OpEqual: {
             return simple_instruction("equal", offset);
         }
@@ -73,6 +85,9 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         }
         case OpNegate: {
             return simple_instruction("negate", offset);
+        }
+        case OpPrint: {
+            return simple_instruction("print", offset);
         }
         case OpReturn: {
             return simple_instruction("return", offset);
