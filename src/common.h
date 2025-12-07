@@ -6,6 +6,7 @@
 
 #define DEBUG_PRINT_CODE
 #define DEBUG_TRACE_EXECUTION
+#define UINT8_COUNT (UINT8_MAX + 1)
 
 typedef uint8_t uint8;
 typedef int32_t int32;

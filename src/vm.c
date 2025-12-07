@@ -127,6 +127,16 @@ static InterpretResult run() {
                 pop();
                 break;
             }
+            case OpGetLocal: {
+                uint8 slot = READ_BYTE();
+                push(vm.stack[slot]);
+                break;
+            }
+            case OpSetLocal: {
+                uint8 slot = READ_BYTE();
+                vm.stack[slot] = peek(0);
+                break;
+            }
             case OpGetGlobal: {
                 ObjString* name = READ_STRING();
                 Value value;
