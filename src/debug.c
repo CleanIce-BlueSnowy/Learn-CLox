@@ -61,7 +61,7 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         }
         case OpSetLocal: {
             return byte_instruction("set_local", chunk, offset);
-        }
+        }   
         case OpGetGlobal: {
             return constant_instruction("get_global", chunk, offset);
         }

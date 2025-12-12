@@ -351,6 +351,7 @@ static void named_variable(Token name, bool can_assign) {
         get_op = OpGetLocal;
         set_op = OpSetLocal;
     } else {
+        arg = identifier_constant(&name);
         get_op = OpGetGlobal;
         set_op = OpSetGlobal;
     }
