@@ -127,6 +127,13 @@ static void emit_bytes(uint8 byte1, uint8 byte2) {
     emit_byte(byte2);
 }
 
+static int32 emit_jump(uint8 instruction) {
+    emit_byte(instruction);
+    emit_byte(0xff);
+    emit_byte(0xff);
+    return current_chunk()->count - 2;
+}
+
 static void emit_return() {
     emit_byte(OpReturn);
 }
@@ -142,6 +149,17 @@ static uint8 make_constant(Value value) {
 
 static void emit_constant(Value value) {
     emit_bytes(OpConstant, make_constant(value));
+}
+
+static void patch_jump(int32 offset) {
+    int32 jump = current_chunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        error("Too much code to jump over.");
+    }
+
+    current_chunk()->code[offset] = (jump >> 8) & 0xff;
+    current_chunk()->code[offset + 1] = jump & 0xff;
 }
 
 static void init_compiler(Compiler* compiler) {
@@ -489,6 +507,17 @@ static void expression_statement() {
     emit_byte(OpPop);
 }
 
+static void if_statement() {
+    consume(TokenLeftParen, "Expect `(` after `if`.");
+    expression();
+    consume(TokenRightParen, "Expect `)` after condition.");
+
+    int32 then_jump = emit_jump(OpJumpIfFalse);
+    statement();
+
+    patch_jump(then_jump);
+}
+
 static void print_statement() {
     expression();
     consume(TokenSemicolon, "Expect `;` after value.");
@@ -536,6 +565,8 @@ static void declaration() {
 static void statement() {
     if (match(TokenPrint)) {
         print_statement();
+    } else if (match(TokenIf)) {
+        if_statement();
     } else if (match(TokenLeftBrace)) {
         begin_scope();
         block();

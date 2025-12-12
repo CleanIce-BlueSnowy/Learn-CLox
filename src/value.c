@@ -66,4 +66,5 @@ bool values_equal(Value a, Value b) {
             return as_obj(a) == as_obj(b);
         }
     }
+    return false;  // unreachable
 }
