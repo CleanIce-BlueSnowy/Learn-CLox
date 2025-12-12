@@ -1,2 +1,5 @@
-var a = 1;
-print a;
+var a = 12;
+
+if (a > 10) {
+    print "Yes!";
+}

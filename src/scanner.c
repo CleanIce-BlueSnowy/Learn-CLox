@@ -143,7 +143,7 @@ static TokenType identifier_type() {
             break;
         }
         case 'i': {
-            return check_keyword(1, 2, "f", TokenIf);
+            return check_keyword(1, 1, "f", TokenIf);
         }
         case 'n': {
             return check_keyword(1, 2, "il", TokenNil);
