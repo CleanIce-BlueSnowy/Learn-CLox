@@ -1,5 +1,27 @@
-var a = 12;
+var n = 30;
 
-if (a > 10) {
-    print "Yes!";
+var res;
+if (n < 0) {
+    res = nil;
+} else if (n == 0) {
+    res = nil;
+} else if (n == 1) {
+    res = 1;
+} else if (n == 2) {
+    res = 1;
+} else {
+    var first = 1;
+    var second = 1;
+    for (var i = 2; i < n; i = i + 1) {
+        var temp = first;
+        first = second;
+        second = second + temp;
+    }
+    res = second;
+}
+
+if (res == nil) {
+    print "Invalid.";
+} else {
+    print res;
 }

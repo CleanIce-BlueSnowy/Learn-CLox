@@ -220,11 +220,21 @@ static InterpretResult run() {
                 printf("\n");
                 break;
             }
+            case OpJump: {
+                uint16 offset = READ_SHORT();
+                vm.ip += offset;
+                break;
+            }
             case OpJumpIfFalse: {
                 uint16 offset = READ_SHORT();
                 if (is_falsy(peek(0))) {
                     vm.ip += offset;
                 }
+                break;
+            }
+            case OpLoop: {
+                uint16 offset = READ_SHORT();
+                vm.ip -= offset;
                 break;
             }
             case OpReturn: {
