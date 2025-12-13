@@ -324,7 +324,7 @@ static void binary([[maybe_unused]] bool _can_assign) {
             break;
         }
         case TokenLessEqual: {
-            emit_bytes(OpGreater, OpEqual);
+            emit_bytes(OpGreater, OpNot);
             break;
         }
         case TokenPlus: {
@@ -461,7 +461,7 @@ ParseRule rules[] = {
     [TokenIdentifier] = { variable, NULL, PrecNone },
     [TokenString] = { string, NULL, PrecNone },
     [TokenNumber] = { number, NULL, PrecNone },
-    [TokenAnd] = { NULL, and, PrecNone },
+    [TokenAnd] = { NULL, and, PrecAnd },
     [TokenClass] = { NULL, NULL, PrecNone },
     [TokenElse] = { NULL, NULL, PrecNone },
     [TokenFalse] = { literal, NULL, PrecNone },
@@ -469,7 +469,7 @@ ParseRule rules[] = {
     [TokenFun] = { NULL, NULL, PrecNone },
     [TokenIf] = { NULL, NULL, PrecNone },
     [TokenNil] = { literal, NULL, PrecNone },
-    [TokenOr] = { NULL, or, PrecNone },
+    [TokenOr] = { NULL, or, PrecOr },
     [TokenPrint] = { NULL, NULL, PrecNone },
     [TokenReturn] = { NULL, NULL, PrecNone },
     [TokenSuper] = { NULL, NULL, PrecNone },
