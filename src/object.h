@@ -1,9 +1,11 @@
 #pragma once
 
 #include "common.h"
+#include "chunk.h"
 #include "value.h"
 
 typedef enum {
+    ObjectFunction,
     ObjectString,
 } ObjType;
 
@@ -12,6 +14,13 @@ struct Obj {
     struct Obj* next;
 };
 
+typedef struct {
+    Obj obj;
+    int32 arity;
+    Chunk chunk;
+    ObjString* name;
+} ObjFunction;
+
 struct ObjString {
     Obj obj;
     int32 length;
@@ -19,6 +28,7 @@ struct ObjString {
     uint32 hash;
 };
 
+ObjFunction* new_function();
 ObjString* take_string(char* chars, int32 length);
 ObjString* copy_string(const char* chars, int32 length);
 void print_object(Value value);
@@ -31,8 +41,16 @@ static inline ObjType obj_type(Value value) {
     return as_obj(value)->type;
 }
 
+static inline bool is_function(Value value) {
+    return is_obj_type(value, ObjectFunction);
+}
+
 static inline bool is_string(Value value) {
     return is_obj_type(value, ObjectString);
+}
+
+static inline ObjFunction* as_function(Value value) {
+    return (ObjFunction*) as_obj(value);
 }
 
 static inline ObjString* as_string(Value value) {
