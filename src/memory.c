@@ -3,7 +3,7 @@
 #include "memory.h"
 #include "vm.h"
 
-void* reallocate(void* pointer, usize old_size, usize new_size) {
+void* reallocate(void* pointer, [[maybe_unused]] usize old_size, usize new_size) {
     if (new_size == 0) {
         free(pointer);
         return NULL;
@@ -22,6 +22,10 @@ static void free_object(Obj* object) {
             ObjFunction* function = (ObjFunction*) object;
             free_chunk(&function->chunk);
             FREE(ObjFunction, object);
+            break;
+        }
+        case ObjectNative: {
+            FREE(ObjNative, object);
             break;
         }
         case ObjectString: {

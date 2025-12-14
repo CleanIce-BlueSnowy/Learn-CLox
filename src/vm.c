@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -10,6 +11,17 @@
 #include "vm.h"
 
 VM vm;
+
+static void runtime_error(const char* format, ...);
+
+static Value native_clock(int32 arg_count, [[maybe_unused]] Value* args, bool* success) {
+    if (arg_count != 0) {
+        runtime_error("Expected 0 arguments but got %d.", arg_count);
+        *success = false;
+        return nil_val();
+    }
+    return number_val((float64) clock() / CLOCKS_PER_SEC);
+}
 
 static void reset_stack() {
     vm.stack_top = vm.stack;
@@ -39,11 +51,21 @@ static void runtime_error(const char* format, ...) {
     reset_stack();
 }
 
+static void define_native(const char* name, NativeFn function) {
+    push(obj_val((Obj*) copy_string(name, (int32) strlen(name))));
+    push(obj_val((Obj*) new_native(function)));
+    table_set(&vm.globals, as_string(vm.stack[0]), vm.stack[1]);
+    pop();
+    pop();
+}
+
 void init_vm() {
     reset_stack();
     vm.objects = NULL;
     init_table(&vm.globals);
     init_table(&vm.strings);
+
+    define_native("clock", native_clock);
 }
 
 void free_vm() {
@@ -87,6 +109,14 @@ static bool call_value(Value callee, int32 arg_count) {
         switch (obj_type(callee)) {
             case ObjectFunction: {
                 return call(as_function(callee), arg_count);
+            }
+            case ObjectNative: {
+                NativeFn native = as_native(callee);
+                bool success = true;
+                Value result = native(arg_count, vm.stack_top - arg_count, &success);
+                vm.stack_top -= arg_count + 1;
+                push(result);
+                return success;
             }
             default: {
                 break;
