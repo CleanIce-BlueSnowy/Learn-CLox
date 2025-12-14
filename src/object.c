@@ -82,6 +82,7 @@ void print_object(Value value) {
     switch (obj_type(value)) {
         case ObjectFunction: {
             print_function(as_function(value));
+            break;
         }
         case ObjectString: {
             printf("%s", as_cstring(value));

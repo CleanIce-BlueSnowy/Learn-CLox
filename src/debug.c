@@ -117,6 +117,9 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         case OpLoop: {
             return jump_instruction("loop", -1, chunk, offset);
         }
+        case OpCall: {
+            return byte_instruction("call", chunk, offset);
+        }
         case OpReturn: {
             return simple_instruction("return", offset);
         }
