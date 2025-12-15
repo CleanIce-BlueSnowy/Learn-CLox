@@ -32,3 +32,4 @@ set(HEADERS
 
 add_executable(clox ${SOURCES} ${HEADERS})
 target_compile_options(clox PUBLIC -Wall -Wextra -O2)
+target_link_libraries(clox PUBLIC m)

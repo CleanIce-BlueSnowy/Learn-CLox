@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,13 +15,97 @@ VM vm;
 
 static void runtime_error(const char* format, ...);
 
-static Value native_clock(int32 arg_count, [[maybe_unused]] Value* args, bool* success) {
+static Value native_clock(int32 arg_count, [[maybe_unused]] Value* _args, bool* success) {
     if (arg_count != 0) {
         runtime_error("Expected 0 arguments but got %d.", arg_count);
         *success = false;
         return nil_val();
     }
     return number_val((float64) clock() / CLOCKS_PER_SEC);
+}
+
+static Value native_to_string(int32 arg_count, Value* args, bool* success) {
+    if (arg_count != 1) {
+        runtime_error("Expected 1 arguments but got %d.", arg_count);
+        *success = false;
+        return nil_val();
+    }
+
+    Value arg = args[0];
+    if (is_number(arg)) {
+        float64 number = as_number(arg);
+        if (number == floor(number)) {
+            char* str = ALLOCATE(char, 32);
+            int32 length = snprintf(str, 32, "%.0f", number);
+            if (length == -1) {
+                FREE_ARRAY(char, str, 32);
+                runtime_error("An error was thrown when parsing a number to string.");
+                *success = false;
+                return nil_val();
+            }
+            reallocate(str, 32, length + 1);
+            return obj_val((Obj*) take_string(str, length));
+        } else {
+            char* str = ALLOCATE(char, 64);
+            int32 length = snprintf(str, 64, "%g", number);
+            if (length == -1) {
+                FREE_ARRAY(char, str, 32);
+                runtime_error("An error was thrown when parsing a number to string.");
+                *success = false;
+                return nil_val();
+            }
+            reallocate(str, 64, length + 1);
+            return obj_val((Obj*) take_string(str, length));
+        }
+    } else if (is_nil(arg)) {
+        return obj_val((Obj*) copy_string("nil", 3));
+    } else if (is_bool(arg)) {
+        bool val = as_bool(arg);
+        if (val) {
+            return obj_val((Obj*) copy_string("true", 4));
+        } else {
+            return obj_val((Obj*) copy_string("false", 5));
+        }
+    } else if (is_obj(arg)) {
+        if (is_obj_type(arg, ObjectString)) {
+            return arg;
+        } else if (is_obj_type(arg, ObjectFunction)) {
+            ObjFunction* function = as_function(arg);
+            char* str = ALLOCATE(char, 1024);
+            int32 length = snprintf(str, 1024, "<fn %s>", function->name->chars);
+            if (length == -1) {
+                FREE_ARRAY(char, str, 32);
+                runtime_error("An error was thrown when parsing a function to string.");
+                *success = false;
+                return nil_val();
+            }
+            reallocate(str, 1024, length + 1);
+            return obj_val((Obj*) take_string(str, length));
+        } else if (is_obj_type(arg, ObjectNative)) {
+            return obj_val((Obj*) take_string("<native fn>", 11));
+        }
+    }
+    return nil_val();  // Unreachable.
+}
+
+static Value native_readline(int32 arg_count, [[maybe_unused]] Value* _args, bool* success) {
+    if (arg_count != 0) {
+        runtime_error("Expected 0 arguments but got %d.", arg_count);
+        *success = false;
+        return nil_val();
+    }
+
+    char* str = ALLOCATE(char, 1024);
+    if (fgets(str, sizeof(char) * 1024, stdin) == NULL) {
+        FREE_ARRAY(char, str, 1024);
+        runtime_error("An error was thrown when reading a line from stdin.");
+        *success = false;
+        return nil_val();
+    }
+    str[strcspn(str, "\n")] = '\0';
+    int32 length = strlen(str);
+    reallocate(str, 1024, length + 1);
+    return obj_val((Obj*) take_string(str, length));
 }
 
 static void reset_stack() {
@@ -66,6 +151,8 @@ void init_vm() {
     init_table(&vm.strings);
 
     define_native("clock", native_clock);
+    define_native("to_string", native_to_string);
+    define_native("readline", native_readline);
 }
 
 void free_vm() {
