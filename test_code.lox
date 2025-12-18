@@ -1,8 +1,16 @@
-fun outer() {
-    var x = "outside";
-    fun inner() {
-        print x;
+fun get_counter() {
+    var cnt = 0;
+
+    fun count() {
+        cnt = cnt + 1;
+        return cnt;
     }
-    inner();
+
+    return count;
 }
-outer();
+
+var counter = get_counter();
+
+print counter();
+print counter();
+print counter();

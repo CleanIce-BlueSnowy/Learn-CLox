@@ -143,6 +143,9 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
 
             return offset;
         }
+        case OpCloseUpvalue: {
+            return simple_instruction("close_upvalue", offset);
+        }
         case OpReturn: {
             return simple_instruction("return", offset);
         }
