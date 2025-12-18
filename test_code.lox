@@ -1,7 +1,8 @@
-fun say_hello(name) {
-    print "Hello, " + name + "!";
+fun outer() {
+    var x = "outside";
+    fun inner() {
+        print x;
+    }
+    inner();
 }
-
-print "What's your name?";
-var name = readline();
-say_hello(name);
+outer();
