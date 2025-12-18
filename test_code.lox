@@ -1,16 +1,19 @@
-fun get_counter() {
-    var cnt = 0;
+var globalOne;
+var globalTwo;
 
-    fun count() {
-        cnt = cnt + 1;
-        return cnt;
+fun main() {
+  for (var a = 1; a <= 2; a = a + 1) {
+    fun closure() {
+      print a;
     }
-
-    return count;
+    if (globalOne == nil) {
+      globalOne = closure;
+    } else {
+      globalTwo = closure;
+    }
+  }
 }
 
-var counter = get_counter();
-
-print counter();
-print counter();
-print counter();
+main();
+globalOne();
+globalTwo();
