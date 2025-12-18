@@ -120,6 +120,14 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         case OpCall: {
             return byte_instruction("call", chunk, offset);
         }
+        case OpClosure: {
+            offset++;
+            uint8 constant = chunk->code[offset++];
+            printf("%-16s %4d ", "closure", constant);
+            print_value(chunk->constants.values[constant]);
+            printf("\n");
+            return offset;
+        }
         case OpReturn: {
             return simple_instruction("return", offset);
         }

@@ -18,6 +18,12 @@ static Obj* allocate_object(usize size, ObjType type) {
     return object;
 }
 
+ObjClosure* new_closure(ObjFunction* function) {
+    ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, ObjectClosure);
+    closure->function = function;
+    return closure;
+}
+
 ObjFunction* new_function() {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, ObjectFunction);
     function->arity = 0;
@@ -86,6 +92,10 @@ static void print_function(ObjFunction* function) {
 
 void print_object(Value value) {
     switch (obj_type(value)) {
+        case ObjectClosure: {
+            print_function(as_closure(value)->function);
+            break;
+        }
         case ObjectFunction: {
             print_function(as_function(value));
             break;
