@@ -45,6 +45,11 @@ typedef struct {
     int32 depth;
 } Local;
 
+typedef struct {
+    uint8 index;
+    bool is_local;
+} Upvalue;
+
 typedef enum {
     TypeFunction,
     TypeScript,
@@ -56,6 +61,7 @@ typedef struct Compiler {
     FunctionType type;
     Local locals[UINT8_COUNT];
     int32 local_count;
+    Upvalue upvalues[UINT8_COUNT];
     int32 scope_depth;
 } Compiler;
 
@@ -258,6 +264,44 @@ static int32 resolve_local(Compiler* compiler, Token* name) {
     return -1;
 }
 
+static int32 add_upvalue(Compiler* compiler, uint8 index, bool is_local) {
+    int32 upvalue_count = compiler->function->upvalue_count;
+
+    for (int32 i = 0; i < upvalue_count; i++) {
+        Upvalue* upvalue = &compiler->upvalues[i];
+        if (upvalue->index == index && upvalue->is_local == is_local) {
+            return i;
+        }
+    }
+
+    if (upvalue_count == UINT8_COUNT) {
+        error("Too many closure variables in function.");
+        return 0;
+    }
+
+    compiler->upvalues[upvalue_count].is_local = is_local;
+    compiler->upvalues[upvalue_count].index = index;
+    return compiler->function->upvalue_count++;
+}
+
+static int32 resolve_upvalue(Compiler* compiler, Token* name) {
+    if (compiler->enclosing == NULL) {
+        return -1;
+    }
+
+    int32 local = resolve_local(compiler->enclosing, name);
+    if (local != -1) {
+        return add_upvalue(compiler, (uint8) local, true);
+    }
+
+    int32 upvalue = resolve_upvalue(compiler->enclosing, name);
+    if (upvalue != -1) {
+        return add_upvalue(compiler, (uint8) upvalue, false);
+    }
+
+    return -1;
+}
+
 static void add_local(Token name) {
     if (current->local_count == UINT8_COUNT) {
         error("Too many local variables in function.");
@@ -448,6 +492,9 @@ static void named_variable(Token name, bool can_assign) {
     if (arg != -1) {
         get_op = OpGetLocal;
         set_op = OpSetLocal;
+    } else if ((arg = resolve_upvalue(current, &name)) != -1) {
+        get_op = OpGetUpvalue;
+        set_op = OpSetUpvalue;
     } else {
         arg = identifier_constant(&name);
         get_op = OpGetGlobal;
@@ -588,6 +635,11 @@ static void function(FunctionType type) {
 
     ObjFunction* function = end_compiler();
     emit_bytes(OpClosure, make_constant(obj_val((Obj*) function)));
+
+    for (int32 i = 0; i < function->upvalue_count; i++) {
+        emit_byte(compiler.upvalues[i].is_local ? 1 : 0);
+        emit_byte(compiler.upvalues[i].index);
+    }
 }
 
 static void fun_declaration() {

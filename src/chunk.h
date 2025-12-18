@@ -14,6 +14,8 @@ typedef enum {
     OpGetGlobal,
     OpDefineGlobal,
     OpSetGlobal,
+    OpGetUpvalue,
+    OpSetUpvalue,
     OpEqual,
     OpGreater,
     OpLess,
