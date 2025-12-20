@@ -30,6 +30,13 @@ void mark_object(Obj* object) {
     if (object == NULL) {
         return;
     }
+
+    #ifdef DEBUG_LOG_GC
+    printf("%p mark ", (void*) object);
+    print_value(obj_val(object));
+    printf("\n");
+    #endif
+
     object->is_marked = true;
 }
 
@@ -78,6 +85,16 @@ static void mark_roots() {
     for (Value* slot = vm.stack; slot < vm.stack_top; slot++) {
         mark_value(*slot);
     }
+
+    for (int32 i = 0; i < vm.frame_count; i++) {
+        mark_object((Obj*) vm.frames[i].closure);
+    }
+
+    for (ObjUpvalue* upvalue = vm.open_upvalues; upvalue != NULL; upvalue = upvalue->next) {
+        mark_object((Obj*) upvalue);
+    }
+
+    mark_table(&vm.globals);
 }
 
 void collect_garbage() {
