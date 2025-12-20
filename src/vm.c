@@ -202,6 +202,11 @@ static bool call(ObjClosure* closure, int32 arg_count) {
 static bool call_value(Value callee, int32 arg_count) {
     if (is_obj(callee)) {
         switch (obj_type(callee)) {
+            case ObjectClass: {
+                ObjClass* class = as_class(callee);
+                vm.stack_top[-arg_count - 1] = obj_val((Obj*) new_instance(class));
+                return true;
+            }
             case ObjectClosure: {
                 return call(as_closure(callee), arg_count);
             }
@@ -372,6 +377,34 @@ static InterpretResult run() {
                 *frame->closure->upvalues[slot]->location = peek(0);
                 break;
             }
+            case OpGetProperty: {
+                if (!is_instance(peek(0))) {
+                    runtime_error("Only instances have properties.");
+                    return InterpretRuntimeError;
+                }
+                ObjInstance* instance = as_instance(peek(0));
+                ObjString* name = READ_STRING();
+                Value value;
+                if (table_get(&instance->fields, name, &value)) {
+                    pop();
+                    push(value);
+                    break;
+                }
+                runtime_error("Undefined property `%s`.", name->chars);
+                return InterpretRuntimeError;
+            }
+            case OpSetProperty: {
+                if (!is_instance(peek(1))) {
+                    runtime_error("Only instances have properties.");
+                    return InterpretRuntimeError;
+                }
+                ObjInstance* instance = as_instance(peek(1));
+                table_set(&instance->fields, READ_STRING(), peek(0));
+                Value value = pop();
+                pop();
+                push(value);
+                break;
+            }
             case OpEqual: {
                 Value b = pop();
                 Value a = pop();
@@ -485,6 +518,9 @@ static InterpretResult run() {
                 push(result);
                 frame = &vm.frames[vm.frame_count - 1];
                 break;
+            }
+            case OpClass: {
+                push(obj_val((Obj*) new_class(READ_STRING())));
             }
         }
     }

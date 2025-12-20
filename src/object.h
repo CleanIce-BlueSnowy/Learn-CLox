@@ -2,11 +2,14 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "table.h"
 #include "value.h"
 
 typedef enum {
+    ObjectClass,
     ObjectClosure,
     ObjectFunction,
+    ObjectInstance,
     ObjectNative,
     ObjectString,
     ObjectUpvalue,
@@ -54,8 +57,21 @@ typedef struct {
     int32 upvalue_count;
 } ObjClosure;
 
+typedef struct {
+    Obj obj;
+    ObjString* name;
+} ObjClass;
+
+typedef struct {
+    Obj obj;
+    ObjClass* class;
+    Table fields;
+} ObjInstance;
+
+ObjClass* new_class(ObjString* name);
 ObjClosure* new_closure(ObjFunction* function);
 ObjFunction* new_function();
+ObjInstance* new_instance(ObjClass* class);
 ObjNative* new_native(NativeFn function);
 ObjString* take_string(char* chars, int32 length);
 ObjString* copy_string(const char* chars, int32 length);
@@ -70,12 +86,20 @@ static inline ObjType obj_type(Value value) {
     return as_obj(value)->type;
 }
 
+static inline bool is_class(Value value) {
+    return is_obj_type(value, ObjectClass);
+}
+
 static inline bool is_closure(Value value) {
     return is_obj_type(value, ObjectClosure);
 }
 
 static inline bool is_function(Value value) {
     return is_obj_type(value, ObjectFunction);
+}
+
+static inline bool is_instance(Value value) {
+    return is_obj_type(value, ObjectInstance);
 }
 
 static inline bool is_native(Value value) {
@@ -86,12 +110,20 @@ static inline bool is_string(Value value) {
     return is_obj_type(value, ObjectString);
 }
 
+static inline ObjClass* as_class(Value value) {
+    return (ObjClass*) as_obj(value);
+}
+
 static inline ObjClosure* as_closure(Value value) {
     return (ObjClosure*) as_obj(value);
 }
 
 static inline ObjFunction* as_function(Value value) {
     return (ObjFunction*) as_obj(value);
+}
+
+static inline ObjInstance* as_instance(Value value) {
+    return (ObjInstance*) as_obj(value);
 }
 
 static inline NativeFn as_native(Value value) {

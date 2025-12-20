@@ -50,87 +50,93 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
     uint8 instruction = chunk->code[offset];
     switch (instruction) {
         case OpConstant: {
-            return constant_instruction("constant", chunk, offset);
+            return constant_instruction("Constant", chunk, offset);
         }
         case OpNil: {
-            return simple_instruction("nil", offset);
+            return simple_instruction("Nil", offset);
         }
         case OpTrue: {
-            return simple_instruction("true", offset);
+            return simple_instruction("True", offset);
         }
         case OpFalse: {
-            return simple_instruction("false", offset);
+            return simple_instruction("False", offset);
         }
         case OpPop: {
-            return simple_instruction("pop", offset);
+            return simple_instruction("Pop", offset);
         }
         case OpGetLocal: {
-            return byte_instruction("get_local", chunk, offset);
+            return byte_instruction("GetLocal", chunk, offset);
         }
         case OpSetLocal: {
-            return byte_instruction("set_local", chunk, offset);
+            return byte_instruction("SetLocal", chunk, offset);
         }
         case OpGetGlobal: {
-            return constant_instruction("get_global", chunk, offset);
+            return constant_instruction("GetGlobal", chunk, offset);
         }
         case OpDefineGlobal: {
-            return constant_instruction("def_global", chunk, offset);
+            return constant_instruction("DefGlobal", chunk, offset);
         }
         case OpSetGlobal: {
-            return constant_instruction("set_global", chunk, offset);
+            return constant_instruction("SetGlobal", chunk, offset);
         }
         case OpGetUpvalue: {
-            return byte_instruction("get_upvalue", chunk, offset);
+            return byte_instruction("GetUpvalue", chunk, offset);
+        }
+        case OpGetProperty: {
+            return constant_instruction("GetProperty", chunk, offset);
+        }
+        case OpSetProperty: {
+            return constant_instruction("SetProperty", chunk, offset);
         }
         case OpSetUpvalue: {
-            return byte_instruction("set_upvalue", chunk, offset);
+            return byte_instruction("SetUpvalue", chunk, offset);
         }
         case OpEqual: {
-            return simple_instruction("equal", offset);
+            return simple_instruction("Equal", offset);
         }
         case OpGreater: {
-            return simple_instruction("greater", offset);
+            return simple_instruction("Greater", offset);
         }
         case OpLess: {
-            return simple_instruction("less", offset);
+            return simple_instruction("Less", offset);
         }
         case OpAdd: {
-            return simple_instruction("add", offset);
+            return simple_instruction("Add", offset);
         }
         case OpSubtract: {
-            return simple_instruction("subtract", offset);
+            return simple_instruction("Subtract", offset);
         }
         case OpMultiply: {
-            return simple_instruction("multiply", offset);
+            return simple_instruction("Multiply", offset);
         }
         case OpDivide: {
-            return simple_instruction("divide", offset);
+            return simple_instruction("Divide", offset);
         }
         case OpNot: {
-            return simple_instruction("not", offset);
+            return simple_instruction("Not", offset);
         }
         case OpNegate: {
-            return simple_instruction("negate", offset);
+            return simple_instruction("Negate", offset);
         }
         case OpPrint: {
-            return simple_instruction("print", offset);
+            return simple_instruction("Print", offset);
         }
         case OpJump: {
-            return jump_instruction("jump", 1, chunk, offset);
+            return jump_instruction("Jump", 1, chunk, offset);
         }
         case OpJumpIfFalse: {
-            return jump_instruction("jump_false", 1, chunk, offset);
+            return jump_instruction("JumpFalse", 1, chunk, offset);
         }
         case OpLoop: {
-            return jump_instruction("loop", -1, chunk, offset);
+            return jump_instruction("Loop", -1, chunk, offset);
         }
         case OpCall: {
-            return byte_instruction("call", chunk, offset);
+            return byte_instruction("Call", chunk, offset);
         }
         case OpClosure: {
             offset++;
             uint8 constant = chunk->code[offset++];
-            printf("%-16s %4d ", "closure", constant);
+            printf("%-16s %4d ", "Closure", constant);
             print_value(chunk->constants.values[constant]);
             printf("\n");
 
@@ -144,10 +150,13 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
             return offset;
         }
         case OpCloseUpvalue: {
-            return simple_instruction("close_upvalue", offset);
+            return simple_instruction("CloseUpvalue", offset);
         }
         case OpReturn: {
-            return simple_instruction("return", offset);
+            return simple_instruction("Return", offset);
+        }
+        case OpClass: {
+            return constant_instruction("Class", chunk, offset);
         }
         default: {
             printf("Unknown opcode %d\n", instruction);

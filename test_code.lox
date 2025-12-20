@@ -1,12 +1,6 @@
-var msg = "";
-var n = 10;
+class Pair {}
 
-for (var i = 1; i <= n; i = i + 1) {
-    var addition = "Loop #" + to_string(i);
-    if (i != n) {
-        addition = addition + ", ";
-    }
-    msg = msg + addition;
-}
-
-print msg;
+var pair = Pair();
+pair.first = 1;
+pair.second = 2;
+print pair.first + pair.second;
