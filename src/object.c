@@ -56,7 +56,9 @@ static ObjString* allocate_string(char* chars, int32 length, uint32 hash) {
     string->length = length;
     string->chars = chars;
     string->hash = hash;
+    push(obj_val((Obj*) string));
     table_set(&vm.strings, string, nil_val());
+    pop();
     return string;
 }
 

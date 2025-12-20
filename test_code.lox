@@ -1,19 +1,12 @@
-var globalOne;
-var globalTwo;
+var msg = "";
+var n = 10;
 
-fun main() {
-  for (var a = 1; a <= 2; a = a + 1) {
-    fun closure() {
-      print a;
+for (var i = 1; i <= n; i = i + 1) {
+    var addition = "Loop #" + to_string(i);
+    if (i != n) {
+        addition = addition + ", ";
     }
-    if (globalOne == nil) {
-      globalOne = closure;
-    } else {
-      globalTwo = closure;
-    }
-  }
+    msg = msg + addition;
 }
 
-main();
-globalOne();
-globalTwo();
+print msg;
