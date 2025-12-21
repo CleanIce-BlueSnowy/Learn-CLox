@@ -416,7 +416,7 @@ static InterpretResult run() {
                 if (!bind_method(instance->class, name)) {
                     return InterpretRuntimeError;
                 }
-                return InterpretRuntimeError;
+                break;
             }
             case OpSetProperty: {
                 if (!is_instance(peek(1))) {
