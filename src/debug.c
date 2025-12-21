@@ -91,14 +91,17 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         case OpGetUpvalue: {
             return byte_instruction("GetUpvalue", chunk, offset);
         }
+        case OpSetUpvalue: {
+            return byte_instruction("SetUpvalue", chunk, offset);
+        }
         case OpGetProperty: {
             return constant_instruction("GetProperty", chunk, offset);
         }
         case OpSetProperty: {
             return constant_instruction("SetProperty", chunk, offset);
         }
-        case OpSetUpvalue: {
-            return byte_instruction("SetUpvalue", chunk, offset);
+        case OpGetSuper: {
+            return constant_instruction("GetSuper", chunk, offset);
         }
         case OpEqual: {
             return simple_instruction("Equal", offset);
@@ -145,6 +148,9 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         case OpInvoke: {
             return invoke_instruction("Invoke", chunk, offset);
         }
+        case OpSuperInvoke: {
+            return invoke_instruction("SuperInvoke", chunk, offset);
+        }
         case OpClosure: {
             offset++;
             uint8 constant = chunk->code[offset++];
@@ -169,6 +175,9 @@ int32 disassemble_instruction(Chunk* chunk, int32 offset) {
         }
         case OpClass: {
             return constant_instruction("Class", chunk, offset);
+        }
+        case OpInherit: {
+            return simple_instruction("Inherit", offset);
         }
         case OpMethod: {
             return constant_instruction("Method", chunk, offset);
