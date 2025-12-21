@@ -158,6 +158,9 @@ void init_vm() {
     init_table(&vm.globals);
     init_table(&vm.strings);
 
+    vm.init_string = NULL;
+    vm.init_string = copy_string("init", 4);
+
     define_native("clock", native_clock);
     define_native("to_string", native_to_string);
     define_native("readline", native_readline);
@@ -166,6 +169,7 @@ void init_vm() {
 void free_vm() {
     free_table(&vm.globals);
     free_table(&vm.strings);
+    vm.init_string = NULL;
     free_objects();
 }
 
@@ -204,11 +208,19 @@ static bool call_value(Value callee, int32 arg_count) {
         switch (obj_type(callee)) {
             case ObjectBoundMethod: {
                 ObjBoundMethod* bound = as_bound_method(callee);
+                vm.stack_top[-arg_count - 1] = bound->receiver;
                 return call(bound->method, arg_count);
             }
             case ObjectClass: {
                 ObjClass* class = as_class(callee);
                 vm.stack_top[-arg_count - 1] = obj_val((Obj*) new_instance(class));
+                Value initializer;
+                if (table_get(&class->methods, vm.init_string, &initializer)) {
+                    return call(as_closure(initializer), arg_count);
+                } else if (arg_count != 0) {
+                    runtime_error("Expected 0 arguments but got %d.", arg_count);
+                    return false;
+                }
                 return true;
             }
             case ObjectClosure: {
@@ -229,6 +241,31 @@ static bool call_value(Value callee, int32 arg_count) {
     }
     runtime_error("Can only call functions and classes.");
     return false;
+}
+
+static bool invoke_from_class(ObjClass* class, ObjString* name, int32 arg_count) {
+    Value method;
+    if (!table_get(&class->methods, name, &method)) {
+        runtime_error("Undefined property `%s`.", name->chars);
+        return false;
+    }
+    return call(as_closure(method), arg_count);
+}
+
+static bool invoke(ObjString* name, int32 arg_count) {
+    Value receiver = peek(arg_count);
+    if (!is_instance(receiver)) {
+        runtime_error("Only instances have methods.");
+        return false;
+    }
+    ObjInstance* instance = as_instance(receiver);
+
+    Value value;
+    if (table_get(&instance->fields, name, &value)) {
+        vm.stack_top[-arg_count - 1] = value;
+        return call_value(value, arg_count);
+    }
+    return invoke_from_class(instance->class, name, arg_count);
 }
 
 static bool bind_method(ObjClass* class, ObjString* name) {
@@ -506,6 +543,15 @@ static InterpretResult run() {
             case OpCall: {
                 int32 arg_count = READ_BYTE();
                 if (!call_value(peek(arg_count), arg_count)) {
+                    return InterpretRuntimeError;
+                }
+                frame = &vm.frames[vm.frame_count - 1];
+                break;
+            }
+            case OpInvoke: {
+                ObjString* method = READ_STRING();
+                int32 arg_count = READ_BYTE();
+                if (!invoke(method, arg_count)) {
                     return InterpretRuntimeError;
                 }
                 frame = &vm.frames[vm.frame_count - 1];

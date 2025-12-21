@@ -54,6 +54,8 @@ typedef struct {
 
 typedef enum {
     TypeFunction,
+    TypeInitializer,
+    TypeMethod,
     TypeScript,
 } FunctionType;
 
@@ -67,8 +69,13 @@ typedef struct Compiler {
     int32 scope_depth;
 } Compiler;
 
+typedef struct ClassCompiler {
+    struct ClassCompiler* enclosing;
+} ClassCompiler;
+
 Parser parser;
 Compiler* current = NULL;
+ClassCompiler* current_class = NULL;
 
 static Chunk* current_chunk() {
     return &current->function->chunk;
@@ -163,7 +170,11 @@ static int32 emit_jump(uint8 instruction) {
 }
 
 static void emit_return() {
-    emit_byte(OpNil);
+    if (current->type == TypeInitializer) {
+        emit_bytes(OpGetLocal, 0);
+    } else {
+        emit_byte(OpNil);
+    }
     emit_byte(OpReturn);
 }
 
@@ -206,8 +217,13 @@ static void init_compiler(Compiler* compiler, FunctionType type) {
     Local* local = &current->locals[current->local_count++];
     local->depth = 0;
     local->is_captured = false;
-    local->name.start = "";
-    local->name.length = 0;
+    if (type != TypeFunction) {
+        local->name.start = "this";
+        local->name.length = 4;
+    } else {
+        local->name.start = "";
+        local->name.length = 0;
+    }
 }
 
 static ObjFunction* end_compiler() {
@@ -457,6 +473,10 @@ static void dot(bool can_assign) {
     if (can_assign && match(TokenEqual)) {
         expression();
         emit_bytes(OpSetProperty, name);
+    } else if (match(TokenLeftParen)) {
+        uint8 arg_count = argument_list();
+        emit_bytes(OpInvoke, name);
+        emit_byte(arg_count);
     } else {
         emit_bytes(OpGetProperty, name);
     }
@@ -534,6 +554,15 @@ static void variable(bool can_assign) {
     named_variable(parser.previous, can_assign);
 }
 
+static void this([[maybe_unused]] bool _can_assign) {
+    if (current_class == NULL) {
+        error("Can't use \"this\" outside of a class.");
+        return;
+    }
+
+    variable(false);
+}
+
 static void unary([[maybe_unused]] bool _can_assign) {
     TokenType operator_type = parser.previous.type;
 
@@ -589,7 +618,7 @@ ParseRule rules[] = {
     [TokenPrint] = { NULL, NULL, PrecNone },
     [TokenReturn] = { NULL, NULL, PrecNone },
     [TokenSuper] = { NULL, NULL, PrecNone },
-    [TokenThis] = { NULL, NULL, PrecNone },
+    [TokenThis] = { this, NULL, PrecNone },
     [TokenTrue] = { literal, NULL, PrecNone },
     [TokenVar] = { NULL, NULL, PrecNone },
     [TokenWhile] = { NULL, NULL, PrecNone },
@@ -667,7 +696,10 @@ static void method() {
     consume(TokenIdentifier, "Expect nethod name.");
     uint8 constant = identifier_constant(&parser.previous);
 
-    FunctionType type = TypeFunction;
+    FunctionType type = TypeMethod;
+    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0) {
+        type = TypeInitializer;
+    }
     function(type);
     emit_bytes(OpMethod, constant);
 }
@@ -681,6 +713,10 @@ static void class_declaration() {
     emit_bytes(OpClass, name_constant);
     define_variable(name_constant);
 
+    ClassCompiler class_compiler;
+    class_compiler.enclosing = current_class;
+    current_class = &class_compiler;
+
     named_variable(class_name, false);
     consume(TokenLeftBrace, "Expect `{` before class body.");
     while (!check(TokenRightBrace) && !check(TokenEOF)) {
@@ -688,6 +724,8 @@ static void class_declaration() {
     }
     consume(TokenRightBrace, "Expect `}` after class body.");
     emit_byte(OpPop);
+
+    current_class = current_class->enclosing;
 }
 
 static void fun_declaration() {
@@ -797,6 +835,9 @@ static void return_statement() {
     if (match(TokenSemicolon)) {
         emit_return();
     } else {
+        if (current->type == TypeInitializer) {
+            error("Can't return a value from an initializer.");
+        }
         expression();
         consume(TokenSemicolon, "Expect `;` after return value.");
         emit_byte(OpReturn);

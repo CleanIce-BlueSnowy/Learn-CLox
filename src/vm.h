@@ -20,6 +20,7 @@ typedef struct {
     Value* stack_top;
     Table globals;
     Table strings;
+    ObjString* init_string;
     ObjUpvalue* open_upvalues;
     usize bytes_allocated;
     usize next_gc;
