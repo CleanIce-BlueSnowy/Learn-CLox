@@ -6,6 +6,7 @@
 #include "value.h"
 
 typedef enum {
+    ObjectBoundMethod,
     ObjectClass,
     ObjectClosure,
     ObjectFunction,
@@ -60,6 +61,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     ObjString* name;
+    Table methods;
 } ObjClass;
 
 typedef struct {
@@ -68,6 +70,13 @@ typedef struct {
     Table fields;
 } ObjInstance;
 
+typedef struct {
+    Obj obj;
+    Value receiver;
+    ObjClosure* method;
+} ObjBoundMethod;
+
+ObjBoundMethod* new_bound_method(Value receiver, ObjClosure* method);
 ObjClass* new_class(ObjString* name);
 ObjClosure* new_closure(ObjFunction* function);
 ObjFunction* new_function();
@@ -84,6 +93,10 @@ static inline bool is_obj_type(Value value, ObjType type) {
 
 static inline ObjType obj_type(Value value) {
     return as_obj(value)->type;
+}
+
+static inline bool is_bound_method(Value value) {
+    return is_obj_type(value, ObjectBoundMethod);
 }
 
 static inline bool is_class(Value value) {
@@ -108,6 +121,10 @@ static inline bool is_native(Value value) {
 
 static inline bool is_string(Value value) {
     return is_obj_type(value, ObjectString);
+}
+
+static inline ObjBoundMethod* as_bound_method(Value value) {
+    return (ObjBoundMethod*) as_obj(value);
 }
 
 static inline ObjClass* as_class(Value value) {

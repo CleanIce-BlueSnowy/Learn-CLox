@@ -663,16 +663,31 @@ static void function(FunctionType type) {
     }
 }
 
+static void method() {
+    consume(TokenIdentifier, "Expect nethod name.");
+    uint8 constant = identifier_constant(&parser.previous);
+
+    FunctionType type = TypeFunction;
+    function(type);
+    emit_bytes(OpMethod, constant);
+}
+
 static void class_declaration() {
     consume(TokenIdentifier, "Expect class name.");
+    Token class_name = parser.previous;
     uint8 name_constant = identifier_constant(&parser.previous);
     declare_variable();
 
     emit_bytes(OpClass, name_constant);
     define_variable(name_constant);
 
+    named_variable(class_name, false);
     consume(TokenLeftBrace, "Expect `{` before class body.");
+    while (!check(TokenRightBrace) && !check(TokenEOF)) {
+        method();
+    }
     consume(TokenRightBrace, "Expect `}` after class body.");
+    emit_byte(OpPop);
 }
 
 static void fun_declaration() {

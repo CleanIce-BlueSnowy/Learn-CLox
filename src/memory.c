@@ -78,9 +78,16 @@ static void blacken_object(Obj* object) {
     #endif
 
     switch (object->type) {
+        case ObjectBoundMethod: {
+            ObjBoundMethod* bound = (ObjBoundMethod*) object;
+            mark_value(bound->receiver);
+            mark_object((Obj*) bound->method);
+            break;
+        }
         case ObjectClass: {
             ObjClass* class = (ObjClass*) object;
             mark_object((Obj*) class->name);
+            mark_table(&class->methods);
             break;
         }
         case ObjectClosure: {
@@ -120,7 +127,13 @@ static void free_object(Obj* object) {
     #endif
 
     switch (object->type) {
+        case ObjectBoundMethod: {
+            FREE(ObjBoundMethod, object);
+            break;
+        }
         case ObjectClass: {
+            ObjClass* class = (ObjClass*) object;
+            free_table(&class->methods);
             FREE(ObjClass, object);
             break;
         }
